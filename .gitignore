@@ -1,16 +1,44 @@
-/.vs
-/bin
-/obj
-/packages
+# Thư mục bin và obj chứa các tệp được biên dịch
+bin/
+obj/
+
+# Thư mục chứa các tệp tạm thời của Visual Studio
+.vs/
+.vscode/
+
+# Thư mục chứa các gói NuGet
+packages/
+
+# Tệp cấu hình cá nhân của Visual Studio
 *.user
 *.suo
-*.cache
-/node_modules
-/dist
-/.vscode
+*.userosscache
+*.sln.docstates
+
+# Tệp nhật ký và tệp cache
 *.log
-/wwwroot/lib
-/Properties/PublishProfiles
+*.cache
+
+# Thư mục tạm thời khi publish dự án
+Publish/
+
+# Các thư mục tạm của .NET Core
+wwwroot/lib/
+node_modules/
+dist/
+
+# Tệp cấu hình của ASP.NET (tránh chia sẻ cấu hình phát triển)
+appsettings.Development.json
+
+# Các tệp publish profile của Visual Studio
+Properties/PublishProfiles/
 *.pubxml
 *.pubxml.user
-/appsettings.Development.json
+
+# Các tệp backup và temporary của hệ thống (trên hệ điều hành Windows)
+Thumbs.db
+Desktop.ini
+
+# Các tệp của ASP.NET MVC hoặc .NET Core không cần thiết
+*.bak
+*.swp
