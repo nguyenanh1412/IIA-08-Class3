@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\IIA_02_Server_scanner.props" />
-</Project>

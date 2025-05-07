@@ -1,1 +1,16 @@
 /.vs
+/bin
+/obj
+/packages
+*.user
+*.suo
+*.cache
+/node_modules
+/dist
+/.vscode
+*.log
+/wwwroot/lib
+/Properties/PublishProfiles
+*.pubxml
+*.pubxml.user
+/appsettings.Development.json
