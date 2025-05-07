@@ -1,0 +1,191 @@
+﻿@using IIA_02_Server_scanner.Models.ScannerModel
+@model List<BarcodeDataModel>
+@{
+	ViewBag.Title = "Danh sách mã vạch";
+}
+<style>
+	/* Căn giữa văn bản theo chiều dọc trong các ô bảng */
+	.table td, .table th {
+		vertical-align: middle !important; /* Căn giữa theo chiều dọc */
+		text-align: center; /* Căn giữa theo chiều ngang */
+	}
+	/* Cân đối các nút */
+	.btn {
+		padding: 8px 16px; /* Điều chỉnh khoảng cách trong nút */
+		font-size: 14px; /* Điều chỉnh kích thước chữ trong nút */
+		text-align: center; /* Căn giữa chữ trong nút */
+		border-radius: 4px; /* Làm tròn các góc của nút */
+	}
+
+		/* Thêm hiệu ứng hover cho nút */
+		.btn:hover {
+			opacity: 0.9; /* Tăng độ mờ khi di chuột vào nút */
+		}
+
+	/* Hình ảnh trong bảng luôn bằng nhau */
+	.table img {
+		width: 150px; /* Đảm bảo tất cả hình ảnh có cùng chiều rộng */
+		height: 150px; /* Đảm bảo tất cả hình ảnh có cùng chiều cao */
+		object-fit: cover; /* Giữ tỷ lệ hình ảnh và cắt bớt phần thừa */
+		border-radius: 5px; /* Làm tròn các góc hình ảnh */
+	}
+
+	/* Thêm một chút không gian giữa các nút trong bảng */
+	.table td a {
+		margin-right: 10px; /* Khoảng cách giữa các nút */
+	}
+
+	/* Cải thiện độ tương phản cho các nút */
+	.btn-danger {
+		background-color: #e74c3c;
+		border-color: #c0392b;
+	}
+
+		.btn-danger:hover {
+			background-color: #c0392b;
+			border-color: #e74c3c;
+		}
+
+	.btn-warning {
+		background-color: #f39c12;
+		border-color: #e67e22;
+	}
+
+		.btn-warning:hover {
+			background-color: #e67e22;
+			border-color: #f39c12;
+		}
+
+</style>
+<h2>Danh sách mã vạch</h2>
+<p>
+	<!-- Nút mở modal -->
+	<button class="btn btn-primary" data-toggle="modal" data-target="#createModal">Thêm mới</button>
+</p>
+
+<table class="table table-bordered table-striped table-hover">
+	<thead>
+		<tr>
+			<th>Mã vạch</th>
+			<th>URL hình ảnh</th>
+			<th>Ngày tạo</th>
+			<th>Người tạo</th>
+			<th>Thao tác</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var item in Model)
+		{
+			<tr>
+				<td>@item.MaVach</td>
+				<td><img src="@item.BarcodeImageUrl" width="150" /></td>
+				<td>@item.CreatedDate</td>
+				<td>@item.CreatedBy</td>
+				<td>
+					<a href="#" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal-@item.Id">Sửa</a>
+					<a href="#" class="btn btn-danger btn-sm delete-btn" id="@item.Id">Xóa</a>
+				</td>
+			</tr>
+		}
+	</tbody>
+</table>
+
+
+<!-- Modal thêm mã vạch -->
+<div class="modal fade" id="createModal" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@using (Html.BeginForm("Create", "Scanner", FormMethod.Post, new { enctype = "multipart/form-data" }))
+			{
+				<div class="modal-header">
+					<h5 class="modal-title">Thêm mã vạch</h5>
+					<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+				</div>
+				<div class="modal-body">
+					<div class="form-group">
+						@Html.Label("Mã vạch")
+						@Html.TextBox("MaVach", null, new { @class = "form-control", required = "required" })
+					</div>
+					<div class="form-group">
+						<label for="BarcodeImageFile">Ảnh mã vạch</label>
+						<div class="custom-file">
+							<input type="file" class="form-control" id="BarcodeImageFile" name="BarcodeImageFile" accept="image/*" required />
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="submit" class="btn btn-success">Lưu</button>
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+				</div>
+			}
+		</div>
+	</div>
+</div>
+
+<!-- Modal sửa mã vạch -->
+@foreach (var item in Model)
+{
+	<div class="modal fade" id="editModal-@item.Id" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				@using (Html.BeginForm("Edit", "Scanner", FormMethod.Post, new { enctype = "multipart/form-data" }))
+				{
+					@Html.Hidden("Id", item.Id)
+					@Html.Hidden("BarcodeImageUrl", item.BarcodeImageUrl)
+					<div class="modal-header">
+						<h5 class="modal-title">Sửa mã vạch</h5>
+						<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+					</div>
+					<div class="modal-body">
+						<div class="form-group">
+							@Html.Label("Mã vạch")
+							@Html.TextBox("MaVach", item.MaVach, new { @class = "form-control", required = "required" })
+						</div>
+						<div class="form-group">
+							<label for="BarcodeImageFile-@item.Id">Ảnh mã vạch</label>
+							<div class="custom-file">
+								<input type="file" class="form-control" id="BarcodeImageFile-@item.Id" name="BarcodeImageFile" accept="image/*" />
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="submit" class="btn btn-success">Lưu</button>
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+<script>
+
+		$(document).ready(function () {
+		$(".delete-btn").click(function () {
+			var barcodeId = $(this).attr("id"); // Lấy ID của mã vạch cần xóa
+
+			if (confirm("Bạn có chắc muốn xóa mã vạch này không?")) {
+				$.ajax({
+					url: '/Scanner/Delete', // Đường dẫn action xóa
+					type: 'POST',
+					data: { id: barcodeId },
+					success: function (response) {
+						debugger
+						if (response) {
+							alert('Mã vạch đã được xóa thành công!');
+							location.reload(); // Reload trang để cập nhật lại danh sách
+						} else {
+							alert('Có lỗi xảy ra khi xóa mã vạch!');
+						}
+					},
+					error: function () {
+						alert('Có lỗi xảy ra!');
+					}
+				});
+			}
+		});
+	});
+
+</script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

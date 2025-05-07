@@ -1,0 +1,493 @@
+﻿
+<head>
+	<meta charset="UTF-8">
+	<title>Mô phỏng cửa tự động</title>
+</head>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background-color: #f0f0f0;
+		}
+
+		.container {
+			display: flex;
+			justify-content: space-between;
+			padding: 20px;
+		}
+
+		.simulation {
+			position: relative;
+			width: 700px;
+			height: 400px;
+			background-color: #e0e0e0;
+			border: 2px solid #999;
+		}
+
+		.rail {
+			background-color: #888;
+			height: 20px;
+			width: 100%;
+			position: absolute;
+			left: 0;
+		}
+
+			.rail.top {
+				top: 0;
+			}
+
+			.rail.bottom {
+				bottom: 0;
+			}
+
+		.door {
+			background-color: darkgreen;
+			width: 150px;
+			height: 356px;
+			position: absolute;
+			top: 20px;
+			left: 300px;
+		}
+
+		.sensor {
+			position: absolute;
+			width: 30px;
+			height: 20px;
+			background-color: white;
+			border: 1px solid #333;
+			text-align: center;
+			font-size: 12px;
+		}
+
+		/* LS positions - cập nhật */
+		#ls1 {
+			top: -25px;
+			left: 660px;
+			cursor: pointer;
+		}
+		/* sát mép phải */
+		#ls2 {
+			top: -25px;
+			left: 540px;
+			cursor: pointer;
+		}
+
+		#ls3 {
+			top: -25px;
+			left: 0px;
+			cursor: pointer;
+		}
+		/* sát mép trái */
+		#ls4 {
+			top: -25px;
+			left: 100px;
+			cursor: pointer;
+		}
+
+		#ls5 {
+			top: 150px;
+			left: 680px;
+			z-index: 1;
+			cursor: pointer;
+		}
+
+		.pt {
+			position: absolute;
+			top: 0;
+			left: 550px;
+			background-color: white;
+			padding: 2px 5px;
+			font-size: 12px;
+			border: 1px solid #333;
+			z-index: 1;
+			cursor: pointer;
+		}
+
+		.controls {
+			width: 250px;
+		}
+
+		.button {
+			display: inline-block;
+			margin: 10px 5px;
+			padding: 10px 20px;
+			background-color: orangered;
+			color: white;
+			border: none;
+			cursor: pointer;
+		}
+
+			.button.green {
+				background-color: lightgreen;
+				color: black;
+			}
+
+		.logo {
+			margin-top: 40px;
+			text-align: center;
+		}
+
+			.logo img {
+				width: 180px;
+			}
+
+		.bg-green {
+			background-color: lawngreen !important;
+		}
+
+		.disabled-btn {
+			opacity: 0.6;
+			cursor: not-allowed;
+			pointer-events: none;
+		}
+
+	</style>
+<body>
+	<div class="container">
+		<!-- Khu mô phỏng -->
+		<div class="simulation">
+			<div class="rail top"></div>
+			<div class="rail bottom"></div>
+
+			<div class="sensor" id="ls1">LS1</div>
+			<div class="sensor" id="ls2">LS2</div>
+			<div class="sensor" id="ls3">LS3</div>
+			<div class="sensor" id="ls4">LS4</div>
+			<div class="sensor" id="ls5">LS5</div>
+
+			<div class="pt" id="pt">PT1/PT2</div>
+			<div class="door" id="door">
+			</div>
+		</div>
+
+		<!-- Khu điều khiển -->
+		<div class="controls">
+			<button class="button" id="autoBtn">AUTO</button>
+			<br>
+			<button class="button bg-green" id="v1Btn">V1</button>
+			<button class="button" id="v2Btn">V2</button>
+			<br>
+			<button class="button bg-green" id="leftBtn">Left</button>
+			<button class="button" id="rightBtn">Right</button>
+			<br>
+			<button class="button bg-green" id="time2s">2s</button>
+			<button class="button" id="time5s">5s</button>
+			<br>
+			<button class="button green" id="actionBtn">Action</button>
+
+		</div>
+	</div>
+
+<script>
+		const door = document.getElementById("door");
+		// const ls1 = document.getElementById('ls1');
+		// const ls2 = document.getElementById('ls2');
+		// const ls3 = document.getElementById('ls3');
+		// const ls4 = document.getElementById('ls4');
+		const ls5 = document.getElementById("ls5");
+		const v1Btn = document.getElementById("v1Btn");
+		const v2Btn = document.getElementById("v2Btn");
+		const time2s = document.getElementById("time2s");
+		const time5s = document.getElementById("time5s");
+		const leftBtn = document.getElementById("leftBtn");
+		const ls4 = document.getElementById("ls4");
+		const autoBtn = document.getElementById("autoBtn");
+		const rightBtn = document.getElementById("rightBtn");
+		const actionBtn = document.getElementById("actionBtn");
+		let isAuto = false;
+		let doorPosition = 300; // Initial position
+		let doorSpeed = 1;
+		let isMoving = false;
+		let direction = -1; // 1 for right, -1 for left
+		let isSlowingDown = false;
+		let isPt = false;
+		let isLS5 = false;
+		let stt = "";
+		let animationId = 0;
+		let doorSpeedSlow = doorSpeed / 5;
+		let direct = "left";
+		let timeOutClosing = 2000;
+
+		leftBtn.addEventListener("click", () => {
+		direct = "left";
+		leftBtn.classList.add("bg-green");
+		rightBtn.classList.remove("bg-green");
+		});
+		rightBtn.addEventListener("click", () => {
+		direct = "right";
+		rightBtn.classList.add("bg-green");
+		leftBtn.classList.remove("bg-green");
+		});
+		time2s.addEventListener("click", () => {
+		timeOutClosing = 2000;
+		time2s.classList.add("bg-green");
+		time5s.classList.remove("bg-green");
+		});
+		time5s.addEventListener("click", () => {
+		timeOutClosing = 5000;
+		time5s.classList.add("bg-green");
+		time2s.classList.remove("bg-green");
+		});
+
+		function closing() {
+		if (stt == "closing") return; // nếu đang close thì k cho bấm tiếp
+		else {
+			// Nếu đã close hoặc đang mở đã mở thì đóng
+			isMoving = true;
+			doorSpeed = 2;
+			cancelAnimationFrame(animationId);
+			closeDoor();
+		}
+		}
+		function opening() {
+		if (stt == "opening") return; // nếu đang close thì k cho bấm tiếp
+		else {
+			// Nếu đã close hoặc đang mở đã mở thì đóng
+			isMoving = true;
+			doorSpeed = 2;
+			cancelAnimationFrame(animationId);
+			openDoor();
+		}
+		}
+
+		function closeDoor() {
+		if (!isMoving) return;
+		const ls1X = ls1.getBoundingClientRect().left;
+		const ls2X = ls2.getBoundingClientRect().left;
+		const doorX = door.getBoundingClientRect().left;
+
+		// đi qua ls3 thì xóa màu
+		ls3.classList.remove("bg-green");
+
+		// đi qua ls4 thì xóa màu
+		const ls4X = ls4.getBoundingClientRect().left;
+
+		if (doorX - ls4X > 0) {
+			ls4.classList.remove("bg-green");
+		}
+		stt = "closing";
+		// Gần LS2 thì giảm tốc
+		if (Math.abs(doorX - ls2X) < 150) {
+			isSlowingDown = true;
+			doorSpeed = doorSpeedSlow;
+			ls2.classList.add("bg-green");
+		}
+
+		// Di chuyển cửa sang phải
+		doorPosition += doorSpeed;
+		door.style.left = doorPosition + "px";
+
+		// Nếu tới LS1 thì dừng
+		if (Math.abs(doorX - ls1X) < 115) {
+			isMoving = false;
+			isSlowingDown = false;
+			doorSpeed = 2;
+			direction = 2;
+			stt == "closed";
+			ls1.classList.add("bg-green");
+			return;
+		}
+
+		animationId = requestAnimationFrame(closeDoor);
+		}
+		function openDoor() {
+		if (!isMoving) return;
+
+		console.log("openDoor - start", doorPosition); // LOG
+
+		const ls3X = ls3.getBoundingClientRect().right;
+		const ls4X = ls4.getBoundingClientRect().right;
+		const doorRect = door.getBoundingClientRect();
+		const doorRight = doorRect.right;
+		// đi qua ls1 thì xóa màu
+		ls1.classList.remove("bg-green");
+		// đi qua ls2 thì xóa màu
+		const ls2X = ls2.getBoundingClientRect().right;
+		if (doorRight - ls2X <= 0) {
+			ls2.classList.remove("bg-green");
+		}
+		stt = "opening";
+
+		if (Math.abs(doorRight - ls4X) < 150) {
+			isSlowingDown = true;
+			doorSpeed = doorSpeedSlow;
+			ls4.classList.add("bg-green");
+		}
+
+		doorPosition -= doorSpeed;
+		door.style.left = doorPosition + "px";
+
+		console.log("doorPosition after move:", doorPosition); // LOG
+
+		if (Math.abs(doorRight - ls3X) < 120) {
+			isMoving = false;
+			isSlowingDown = false;
+			doorSpeed = 2;
+			stt = "opened";
+			ls3.classList.add("bg-green");
+			if (isAuto && !(isPt || isLS5)) {
+			var a = setTimeout(() => {
+				closing();
+				clearTimeout(a);
+			}, timeOutClosing);
+			}
+			return;
+		}
+
+		animationId = requestAnimationFrame(openDoor);
+		}
+
+		autoBtn.addEventListener("click", () => {
+		isAuto = !isAuto;
+
+		//Đổi màu
+		if (isAuto) {
+			autoBtn.classList.add("bg-green");
+
+			// Disable các nút khác
+			leftBtn.classList.add("disabled-btn");
+			rightBtn.classList.add("disabled-btn");
+			actionBtn.classList.add("disabled-btn");
+			v1Btn.classList.add("disabled-btn");
+			v2Btn.classList.add("disabled-btn");
+			time2s.classList.add("disabled-btn");
+			time5s.classList.add("disabled-btn");
+		} else {
+			autoBtn.classList.remove("bg-green");
+			leftBtn.classList.remove("disabled-btn");
+			rightBtn.classList.remove("disabled-btn");
+			actionBtn.classList.remove("disabled-btn");
+			v1Btn.classList.remove("disabled-btn");
+			v2Btn.classList.remove("disabled-btn");
+			time2s.classList.remove("disabled-btn");
+			time5s.classList.remove("disabled-btn");
+		}
+
+		alert("Chế độ auto: " + (isAuto ? 'Bật' : 'Tắt'));
+		if (isPt || isLS5) {
+			opening();
+		} else {
+			closing();
+		}
+		});
+
+		pt.addEventListener("click", () => {
+		isPt = !isPt;
+
+		// đổi màu
+
+		if (isPt) pt.classList.add("bg-green");
+		else pt.classList.remove("bg-green");
+
+		if (isAuto) {
+			if (isPt) {
+			// mở cửa
+			opening();
+			} else if (!(isPt || isLS5) && stt != "opening") {
+			var a = setTimeout(() => {
+				closing();
+				clearTimeout(a);
+			}, timeOutClosing);
+			}
+		}
+		});
+
+		ls5.addEventListener("click", () => {
+		isLS5 = !isLS5;
+
+		// đổi màu
+
+		if (isLS5) ls5.classList.add("bg-green");
+		else ls5.classList.remove("bg-green");
+
+		if (isAuto) {
+			if (isLS5) {
+			// mở cửa
+			opening();
+			} else if (!(isPt || isLS5) && stt != "opening") {
+			var a = setTimeout(() => {
+				closing();
+				clearTimeout(a);
+			}, timeOutClosing);
+			}
+		}
+		});
+
+		v1Btn.addEventListener("click", () => {
+		doorSpeed = 1;
+		doorSpeedSlow = doorSpeed / 5;
+		v1Btn.classList.add("bg-green");
+		v2Btn.classList.remove("bg-green");
+		});
+		v2Btn.addEventListener("click", () => {
+		doorSpeed = 4;
+		doorSpeedSlow = doorSpeed / 5;
+		v2Btn.classList.add("bg-green");
+		v1Btn.classList.remove("bg-green");
+		});
+		let holdInterval;
+
+		actionBtn.addEventListener("mousedown", () => {
+		isMoving = true;
+		holdInterval = setInterval(() => {
+			if (direct === "left") {
+			// mở thì xóa màu ls1
+			ls1.classList.remove("bg-green");
+			const doorRect = door.getBoundingClientRect();
+			const doorRight = doorRect.right;
+			// đi qua ls2 thì xóa màu
+			const ls2X = ls2.getBoundingClientRect().right;
+			if (doorRight - ls2X <= 0) {
+				ls2.classList.remove("bg-green");
+			}
+
+			// chạm ls4 thì đổi màu
+			const ls4X = ls4.getBoundingClientRect().right;
+			if (Math.abs(doorRight - ls4X) < 150) ls4.classList.add("bg-green");
+			doorPosition -= doorSpeed;
+			console.log("left", doorPosition);
+			if (doorPosition < 0) {
+				//cham ls3 thì đổi màu
+				ls3.classList.add("bg-green");
+				doorPosition = 0;
+			}
+			} else if (direct === "right") {
+			doorPosition += doorSpeed;
+			console.log("right", doorPosition);
+			// qua ls3 thì xóa màu
+			ls3.classList.remove("bg-green");
+
+			// đi qua ls4 thì xóa màu
+			const doorX = door.getBoundingClientRect().left;
+			const ls4X = ls4.getBoundingClientRect().left;
+
+			if (doorX - ls4X > 0) {
+				ls4.classList.remove("bg-green");
+			}
+
+			// chạm ls2 thì đổi màu
+			const ls2X = ls2.getBoundingClientRect().left;
+			if (Math.abs(doorX - ls2X) < 150) {
+				ls2.classList.add("bg-green");
+			}
+			if (doorPosition > 547) {
+				// chạm ls1 thì đổi màu
+				ls1.classList.add("bg-green");
+				doorPosition = 547;
+			}
+			}
+			door.style.left = doorPosition + "px";
+		}, 20);
+		});
+
+		actionBtn.addEventListener("mouseup", () => {
+		clearInterval(holdInterval);
+		isMoving = false;
+		});
+
+		actionBtn.addEventListener("mouseleave", () => {
+		clearInterval(holdInterval);
+		isMoving = false;
+		});
+</script>
+</body>
+
