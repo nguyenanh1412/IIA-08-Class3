@@ -1,0 +1,176 @@
+﻿@model List<Sheep>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Sheep Information Display</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link rel="stylesheet" href="~/css/CountSheepCss.css" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+	<!-- Link CDN cho Font Awesome (Phiên bản miễn phí) -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+</head>
+<body class="min-h-screen bg-gray-50">
+	<div class="container mx-auto px-4 py-8 max-w-4xl">
+		<h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Sheep Information Display</h1>
+		<p class="text-center text-gray-600 mb-8">Enter the number of sheep to display their information</p>
+
+		<div class="bg-white rounded-lg shadow-sm p-6 mb-2">
+			<div class="flex flex-col sm:flex-row gap-4 items-center">
+				<div class="flex-1">
+					<label for="sheepCount" class="block text-sm font-medium text-gray-700 mb-1">Number of Sheep</label>
+					<input type="number"
+						   id="sheepCount"
+						   min="0"
+						   max="50"
+						   value="3"
+						   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+						   placeholder="Enter number of sheep">
+				</div>
+				<button id="generateBtn" style="margin-top: 22px !important;"
+						class="mt-2 sm:mt-6 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+					Generate Sheep
+				</button>
+			</div>
+		</div>
+		<div>
+			<div id="sumXuat">Tổng số lượng xuất: 0</div>
+			<div id="sumDaXuat">Đã xuất: 0</div>
+			<div class="loading">
+				<div class="col-12 d-flex justify-content-center">
+					<div>Đang xuất cừu ...</div>
+				</div>
+				<div class="col-12 d-flex justify-content-center">
+					<img src="~/img/Animation - 1745825839561.gif" alt="Alternate Text" />
+				</div>
+			</div>
+			<input id="soluongXuat" class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500" type="number" name="name" value="" placeholder="Nhập số lượng xuất" />
+		</div>
+		<button id="btnExportSheep" class="mt-2 mb-2 sm:mt-6 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+			Xuất cừu
+		</button>
+		<button id="btnStopExportSheep" class="mt-2 sm:mt-6 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+			Dừng xuất cừu
+		</button>
+		@* <div id="SumSheep">Tổng số: @Model.Count</div> *@
+		<div id="sheepContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+			<!-- Sheep cards will be generated here -->
+			@{
+				foreach (var sheep in Model)
+				{
+					<div id="@sheep.Id" class="sheep-card bg-white rounded-lg shadow-md overflow-hidden">
+						<div class="p-4">
+							<h3 class="font-medium text-lg mb-1">Cừu @sheep.Color</h3>
+							<p class="text-gray-600 text-sm">Cân nặng: @sheep.MeatWeightKg Kg</p>
+							<p class="text-gray-600 text-sm">Cân lông: @sheep.WoolWeightKg Kg</p>
+						</div>
+					</div>
+				}
+			}
+
+		</div>
+
+	</div>
+
+	<script>
+			$(document).ready(function (){
+			// DOM elements
+			$('#btnStopExportSheep').hide();
+			$('.loading').hide();
+			const sheepCountInput = document.getElementById('sheepCount');
+			const generateBtn = document.getElementById('generateBtn');
+			const sheepContainer = document.getElementById('sheepContainer');
+			const sumSheep = document.getElementById('SumSheep');
+
+			generateBtn.addEventListener('click',()=>{
+				console.log('cl')
+				const sheepCount = parseInt(sheepCountInput.value);
+				$.get("/CountSheep/CountSheep",{quantity: sheepCount},function(res){
+					console.log(res);
+				})
+			});
+			const connection = new signalR.HubConnectionBuilder()
+				.withUrl("/logHub")
+				.build();
+			let sum = @Model.Count;
+			connection.on("ReceiveSheepInfo", function (sheepInfo) {
+				// Cập nhật giao diện UI với thông tin cừu
+				console.log(sheepInfo); // hoặc cập nhật UI với sheepInfo
+				// const card = document.createElement('div');
+				// card.className = 'sheep-card bg-white rounded-lg shadow-md overflow-hidden';
+				// card.innerHTML = sheepInfo
+				sheepContainer.innerHTML += (sheepInfo);
+				sum ++;
+				sumSheep.innerText = `Tổng số: ${sum}`
+			});
+
+			connection.start().catch(function (err) {
+				return console.error(err.toString());
+			});
+			let idTimeout = 0
+					document.getElementById("btnExportSheep").addEventListener('click', async () => {
+					$('#btnExportSheep').hide();
+					$('.loading').show();
+					$('#soluongXuat').hide();
+					document.getElementById('sumDaXuat').innerText = 'Đã xuất: ' + 0;
+
+					const container = document.getElementById('sheepContainer');
+					let i = 0;
+					let maxCount = document.getElementById('soluongXuat').value;
+					document.getElementById('sumXuat').innerText = 'Tổng số lượng xuất: ' + maxCount;
+
+					// Chuyển hàm removeFirst thành async để có thể sử dụng await
+					async function removeFirst() {
+						const firstSheep = container.querySelector('.sheep-card');
+						if (firstSheep && i < Number(maxCount)) {
+							const sheepId = firstSheep.id; // Lấy ID cừu
+
+							// Random delay từ 1-5s
+							const randomDelay = Math.floor(Math.random() * 5000) + 1000;
+
+							// Đợi trước khi gọi API
+							await new Promise(resolve => setTimeout(resolve, randomDelay));
+
+							// Call API xuất cừu bằng AJAX
+							try {
+								const result = await $.ajax({
+									url: '/CountSheep/XuatCuu?ID=' + sheepId,
+									type: 'GET',
+									contentType: 'application/json',
+									data: JSON.stringify({ ID: sheepId })
+								});
+
+								// API thành công
+								firstSheep.remove();
+								i++;
+								document.getElementById('sumDaXuat').innerText = 'Đã xuất: ' + i;
+
+								// Tiếp tục gọi hàm removeFirst nếu chưa đủ số lượng
+								removeFirst();
+							} catch (error) {
+								console.error('API xuất cừu lỗi:', error);
+								// Nếu lỗi, có thể retry hoặc dừng lại tùy ý
+							}
+						} else {
+							$('#btnExportSheep').show()
+							$('.loading').hide();
+							$('#soluongXuat').show();
+							alert("Đã xuất đủ");
+						}
+					}
+
+					removeFirst();
+				});
+
+			$('#btnStopExportSheep').click(()=>{
+				clearInterval(idTimeout)
+				$('#btnExportSheep').show()
+				$('#btnStopExportSheep').hide()
+			})
+
+		})
+	</script>
+</body>
+</html>

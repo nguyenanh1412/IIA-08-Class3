@@ -1,0 +1,86 @@
+﻿@{
+	ViewBag.Title = "Báo Cáo Cừu Đã Xuất";
+}
+
+@model List<Sheep>
+
+<h2 class="mb-4">Báo Cáo Cừu Đã Xuất</h2>
+
+@using (Html.BeginForm("BaoCaoTheoThoiGian", "BaoCao", FormMethod.Get))
+{
+	<div class="card mb-4">
+		<div class="card-header bg-primary text-white">
+			<h5 class="card-title mb-0">Chọn Khoảng Thời Gian Báo Cáo</h5>
+		</div>
+		<div class="card-body">
+			<div class="form-group mb-3">
+				<label for="FromDate" class="font-weight-bold">Từ Ngày (Bao gồm giờ, phút, giây):</label>
+				<input type="datetime-local" id="FromDate" name="FromDate" class="form-control"
+					   value="@(DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd 00:00:00"))" />
+			</div>
+			<div class="form-group mb-3">
+				<label for="ToDate" class="font-weight-bold">Đến Ngày (Bao gồm giờ, phút, giây):</label>
+				<input type="datetime-local" id="ToDate" name="ToDate" class="form-control"
+					   value="@(DateTime.Now.ToString("yyyy-MM-dd 23:59:59"))" />
+			</div>
+			<div class="form-group text-right mt-3">
+				<button type="submit" class="btn btn-success">Xem Báo Cáo</button>
+				<button class="btn btn-primary ml-2" onclick="downloadExcel(event)">Tải Excel</button>
+			</div>
+		</div>
+	</div>
+}
+<script>
+	function downloadExcel(event) {
+		event.preventDefault();
+		var fromDate = document.getElementById("FromDate").value;
+		var toDate = document.getElementById("ToDate").value;
+
+		// Gọi export bằng chuyển trang đến action, như tải file
+			const url = `/BaoCao/ExportBaoCaoTheoThoiGian?FromDate=${encodeURIComponent(fromDate)}&ToDate=${encodeURIComponent(toDate)}`;
+
+			window.open(url, "_blank");
+	}
+</script>
+<!-- Hiển thị kết quả báo cáo -->
+@if (Model != null && Model.Any())
+{
+	<div class="card">
+		<div class="card-header bg-info text-white">
+			<h5 class="card-title mb-0">Kết Quả Báo Cáo</h5>
+		</div>
+		<div class="card-body">
+			<table class="table table-bordered table-striped">
+				<thead class="thead-dark">
+					<tr>
+						<th>STT</th>
+						<th>Thời Gian Xuất</th>
+						<th>Màu Cừu</th>
+						<th>Trọng Lượng Thịt (kg)</th>
+						<th>Trọng Lượng Lông (kg)</th>
+						<th>Trạng Thái</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var item in Model.Select((value, index) => new { value, index }))
+					{
+						<tr>
+							<td>@(item.index + 1)</td> <!-- Số thứ tự -->
+							<td>@item.value.NgayXuat</td>
+							<td>@item.value.Color</td>
+							<td>@item.value.MeatWeightKg</td>
+							<td>@item.value.WoolWeightKg</td>
+							<td>@item.value.Status</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
+}
+else
+{
+	<div class="alert alert-warning" role="alert">
+		Không có dữ liệu báo cáo cho khoảng thời gian đã chọn.
+	</div>
+}

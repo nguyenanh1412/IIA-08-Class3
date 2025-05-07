@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\IIA_Camera_Web.props" />
+</Project>
